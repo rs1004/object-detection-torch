@@ -1,2 +1,2 @@
 # object-detection-torch
-object detection by ? with pytorch
+object detection by yolov3 with pytorch
