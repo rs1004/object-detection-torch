@@ -11,3 +11,10 @@ PASCAL VOC (Visual Object Classes) 2007, 2012を使用。
 > Pascal VOC 2007および2012の16,551枚のtrainval画像を用いて学習し、Pascal VOC 2007の4,952枚のtest画像を用いて評価する手法を使っていくことにします。
 
 この方法を参考にしてみる。
+
+学習データ：
+- data/VOCdevkit/VOC2007/ImageSets/Main/trainval.txt
+- data/VOCdevkit/VOC2012/ImageSets/Main/trainval.txt
+
+テストデータ：
+- data/VOCdevkit/VOC2007/ImageSets/Main/test.txt
