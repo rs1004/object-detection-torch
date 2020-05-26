@@ -11,6 +11,6 @@ dataset = MyDataset(data_dir='/work/data/VOCdevkit/VOC2007',
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=4,
                                          shuffle=True, num_workers=2)
 
-for images, labels in dataloader:
-    print(labels[0])
+for images, labels, masks in dataloader:
+    print(images)
     break

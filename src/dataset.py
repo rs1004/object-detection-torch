@@ -45,12 +45,12 @@ class MyDataset(Dataset):
         image_path, label_path = self.data_paths[idx]
 
         image = Image.open(image_path).convert('RGB').resize((self.imsize, self.imsize))
-        label = self._get_label(label_path)
+        label, mask = self._get_label_mask(label_path)
 
         if self.transform:
             image = self.transform(image)
 
-        return image, label
+        return image, label, mask
 
     def _get_paths(self, data_dir, data_list_file_name):
         data_list_path = Path(data_dir) / 'ImageSets' / 'Main' / data_list_file_name
@@ -60,7 +60,7 @@ class MyDataset(Dataset):
 
         return [[Path(data_dir) / 'JPEGImages' / f'{i}.jpg', Path(data_dir) / 'Annotations' / f'{i}.xml'] for i in ids[:-1]]
 
-    def _get_label(self, label_path):
+    def _get_label_mask(self, label_path):
         grid_len = self.imsize // self.grid_num
 
         root = ET.parse(label_path).getroot()
@@ -88,4 +88,4 @@ class MyDataset(Dataset):
         for j in range(self.bbox_num):
             mask[:, :, 4+5*j] += (1 - mask[:, :, 4+5*j]) * self.l_noobj
 
-        return torch.stack([label, mask])
+        return label, mask
