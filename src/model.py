@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from functools import partial
@@ -64,7 +65,7 @@ class Yolo(nn.Module):
     def forward(self, x):
         # layer1
         x = self.f(self.conv1_1(x))
-        x = self.poo1(x)
+        x = self.pool1(x)
 
         # layer2
         x = self.f(self.conv2_1(x))
@@ -108,11 +109,10 @@ class Yolo(nn.Module):
 
         # layer8
         x = self.f(self.fc8(x))
-        x = x.view(-1, self.grid_num, self.grid_num, 5 * self.bbox_num + self.class_num)
-        x1 = F.softmax(x[:, :5 * self.bbox_num].view(-1, self.grid_num ** 2, 5 * self.bbox_num), dim=1)
-        x1 = x1.view(-1, self.grid_num, self.grid_num, 5 * self.bbox_num)
-        x2 = F.softmax(x[:, 5 * self.bbox_num:].view(-1, self.grid_num, self.grid_num, self.class_num), dim=3)
-        x = torch.cat([x1, x2], dim=3)
+        x = x.view(-1, 5 * self.bbox_num + self.class_num, self.grid_num, self.grid_num)
+        x1 = F.sigmoid(x[:, :5 * self.bbox_num])
+        x2 = F.softmax(x[:, 5 * self.bbox_num:], dim=1)
+        x = torch.cat([x1, x2], dim=1)
 
         return x
 
