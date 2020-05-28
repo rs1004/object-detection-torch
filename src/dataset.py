@@ -3,38 +3,18 @@ from PIL import Image
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import torch
-
-LABEL_MAP = {
-    'aeroplane': 0,
-    'bicycle': 1,
-    'bird': 2,
-    'boat': 3,
-    'bottle': 4,
-    'bus': 5,
-    'car': 6,
-    'cat': 7,
-    'chair': 8,
-    'cow': 9,
-    'diningtable': 10,
-    'dog': 11,
-    'horse': 12,
-    'motorbike': 13,
-    'person': 14,
-    'pottedplant': 15,
-    'sheep': 16,
-    'sofa': 17,
-    'train': 18,
-    'tvmonitor': 19
-}
+import json
 
 
-class MyDataset(Dataset):
-    def __init__(self, data_dir, data_list_file_name, imsize=448, grid_num=7, bbox_num=2, l_coord=5., l_noobj=0.5, transform=None):
+class PascalVOCDataset(Dataset):
+    def __init__(self, data_dirs, data_list_file_name, imsize=448, grid_num=7, bbox_num=2, class_num=20, l_coord=5., l_noobj=0.5, transform=None):
         self.transform = transform
-        self.data_paths = self._get_paths(data_dir, data_list_file_name)
+        self.data_paths = self._get_paths(data_dirs, data_list_file_name)
         self.imsize = imsize
         self.grid_num = grid_num
         self.bbox_num = bbox_num
+        self.class_num = class_num
+        self.label_map = self._get_label_map()
         self.l_coord = l_coord
         self.l_noobj = l_noobj
 
@@ -52,40 +32,58 @@ class MyDataset(Dataset):
 
         return image, label, mask
 
-    def _get_paths(self, data_dir, data_list_file_name):
-        data_list_path = Path(data_dir) / 'ImageSets' / 'Main' / data_list_file_name
+    def _get_label_map(self):
+        label_map_path = Path(__file__).parent / 'label_map.json'
+        with open(label_map_path, 'r') as f:
+            labels = json.load(f)['PascalVOC']
+        label_map = {label: i for i, label in enumerate(labels)}
+        return label_map
 
-        with open(data_list_path, 'r') as f:
-            ids = f.read().split('\n')
+    def _get_paths(self, data_dirs, data_list_file_name):
+        if isinstance(data_dirs, str):
+            data_dirs = [data_dirs]
 
-        return [[Path(data_dir) / 'JPEGImages' / f'{i}.jpg', Path(data_dir) / 'Annotations' / f'{i}.xml'] for i in ids[:-1]]
+        paths = []
+        for data_dir in data_dirs:
+            data_list_path = Path(data_dir) / 'ImageSets' / 'Main' / data_list_file_name
+
+            with open(data_list_path, 'r') as f:
+                ids = f.read().split('\n')
+
+            paths += [[Path(data_dir) / 'JPEGImages' / f'{i}.jpg', Path(data_dir) / 'Annotations' / f'{i}.xml'] for i in ids[:-1]]
+
+        return paths
 
     def _get_label_mask(self, label_path):
         grid_len = self.imsize // self.grid_num
 
         root = ET.parse(label_path).getroot()
-        width, height, _ = [int(s.text) for s in root.find('size')]
-        label = torch.zeros((self.grid_num, self.grid_num, 5 * self.bbox_num + len(LABEL_MAP)))
+        size = root.find('size')
+        width, height = int(size.find('width').text), int(size.find('height').text)
+        label = torch.zeros((5 * self.bbox_num + self.class_num, self.grid_num, self.grid_num))
         mask = torch.zeros_like(label)
+
         for obj in root.iter('object'):
-            xmin, ymin, xmax, ymax = [int(b.text) for b in obj.find('bndbox')]
+            bbox = obj.find('bndbox')
+            xmin, ymin, xmax, ymax = int(bbox.find('xmin').text), int(bbox.find('ymin').text), int(bbox.find('xmax').text), int(bbox.find('ymax').text)
             xmin, xmax = self.imsize * xmin / width, self.imsize * xmax / width
             ymin, ymax = self.imsize * ymin / height, self.imsize * ymax / height
-            c = LABEL_MAP[obj.find('name').text]
+            c = self.label_map[obj.find('name').text]
             cx, cy = (xmax + xmin) / 2, (ymax + ymin) / 2
             lx, ly = xmax - xmin, ymax - ymin
             idx, idy = int(cx // grid_len), int(cy // grid_len)
             for j in range(self.bbox_num):
-                if label[idx, idy, 5*j] == 0.:
-                    label[idx, idy, 0+5*j:2+5*j] = (torch.tensor([cx, cy]) % grid_len) / grid_len
-                    label[idx, idy, 2+5*j:4+5*j] = torch.sqrt((torch.tensor([lx, ly]) / self.imsize))
-                    label[idx, idy, 4+5*j] = 1.
-                    mask[idx, idy, 0+5*j:4+5*j] = self.l_coord
-                    mask[idx, idy, 4+5*j] = 1
+                if label[5*j, idx, idy] == 0.:
+                    label[0+5*j:2+5*j, idx, idy] = (torch.tensor([cx, cy]) % grid_len) / grid_len
+                    label[2+5*j:4+5*j, idx, idy] = torch.sqrt((torch.tensor([lx, ly]) / self.imsize))
+                    label[4+5*j, idx, idy] = 1.
+                    mask[0+5*j:4+5*j, idx, idy] = self.l_coord
+                    mask[4+5*j, idx, idy] = 1.
                     break
-            label[idx, idy, 10+c] = 1.
-            mask[idx, idy, 10:] = 1.
+            label[10+c, idx, idy] = 1.
+            mask[10:, idx, idy] = 1.
+
         for j in range(self.bbox_num):
-            mask[:, :, 4+5*j] += (1 - mask[:, :, 4+5*j]) * self.l_noobj
+            mask[4+5*j] += (1 - mask[4+5*j]) * self.l_noobj
 
         return label, mask
