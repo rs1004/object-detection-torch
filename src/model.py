@@ -5,7 +5,7 @@ from functools import partial
 
 
 class Yolo(nn.Module):
-    def __init__(self, grid_num, bbox_num, class_num):
+    def __init__(self, grid_num, bbox_num, class_num=20):
         super(Yolo, self).__init__()
 
         # params
@@ -110,7 +110,7 @@ class Yolo(nn.Module):
         # layer8
         x = self.f(self.fc8(x))
         x = x.view(-1, 5 * self.bbox_num + self.class_num, self.grid_num, self.grid_num)
-        x1 = F.sigmoid(x[:, :5 * self.bbox_num])
+        x1 = torch.sigmoid(x[:, :5 * self.bbox_num])
         x2 = F.softmax(x[:, 5 * self.bbox_num:], dim=1)
         x = torch.cat([x1, x2], dim=1)
 
