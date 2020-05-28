@@ -33,7 +33,7 @@ class PascalVOCDataset(Dataset):
         return image, label, mask
 
     def _get_label_map(self):
-        label_map_path = Path(__file__).parent / 'label_map.json'
+        label_map_path = Path(__file__).parent / 'labelmap.json'
         with open(label_map_path, 'r') as f:
             labels = json.load(f)['PascalVOC']
         label_map = {label: i for i, label in enumerate(labels)}
