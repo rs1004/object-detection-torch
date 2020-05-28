@@ -3,6 +3,7 @@ from model import Yolo
 from loss import yolo_loss
 import torch
 import torchvision.transforms as transforms
+import torch.optim as optim
 import argparse
 
 if __name__ == '__main__':
@@ -14,6 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('--l_coord', type=float, default=5.)
     parser.add_argument('--l_noobj', type=float, default=.5)
     parser.add_argument('--batch_size', type=int, default=4)
+    parser.add_argument('--epochs', type=int, default=5)
     args = parser.parse_args()
 
     transform = transforms.Compose([transforms.ToTensor()])
@@ -39,10 +41,27 @@ if __name__ == '__main__':
         bbox_num=args.bbox_num,
         class_num=args.class_num)
 
-    for images, labels, masks in dataloader:
-        break
+    optimizer = optim.Adam(net.parameters(), lr=0.001)
 
-    images = net(images)
+    running_loss = 0.0
+    for epoch in range(args.epochs):
+        for i, (images, labels, masks) in enumerate(dataloader):
+            # TODO to GPU device
 
-    loss = yolo_loss(input=images, target=labels, mask=masks)
-    loss.backward()
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            # forward + backward + optimize
+            outputs = net(images)
+            loss = yolo_loss(input=outputs, target=labels, mask=masks)
+            loss.backward()
+            optimizer.step()
+
+            running_loss += loss.item()
+            print(f'[Epoch {epoch} / {args.epoch}] {i} / {args.batch_size / len(dataloader)}  loss: {running_loss}')
+        running_loss = 0.0
+
+print('Finished Training')
+
+PATH = './yolo_net.pth'
+torch.save(net.state_dict(), PATH)
