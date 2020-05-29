@@ -52,7 +52,7 @@ if __name__ == '__main__':
         with tqdm(dataloader, total=len(dataloader)) as pbar:
             for i, (images, labels, masks) in enumerate(pbar):
                 # description
-                pbar.set(f'[Epoch {epoch+1:03}/{args.epochs}] loss: {running_loss}')
+                pbar.set_description(f'[Epoch {epoch+1:03}/{args.epochs}] loss: {running_loss}')
 
                 # to GPU device
                 images = images.to(device)
