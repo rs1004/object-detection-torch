@@ -1,6 +1,7 @@
 from dataset import PascalVOCDataset
 from model import Yolo
 from loss import yolo_loss
+from tqdm import tqdm
 import torch
 import torchvision.transforms as transforms
 import torch.optim as optim
@@ -43,23 +44,32 @@ if __name__ == '__main__':
 
     optimizer = optim.Adam(net.parameters(), lr=0.001)
 
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    net.to(device)
+
     running_loss = 0.0
     for epoch in range(args.epochs):
-        for i, (images, labels, masks) in enumerate(dataloader):
-            # TODO to GPU device
+        with tqdm(dataloader, total=len(dataloader)) as pbar:
+            for i, (images, labels, masks) in enumerate(pbar):
+                # description
+                pbar.set(f'[Epoch {epoch+1:03}/{args.epochs}] loss: {running_loss}')
 
-            # zero the parameter gradients
-            optimizer.zero_grad()
+                # to GPU device
+                images = images.to(device)
+                labels = labels.to(device)
+                masks = masks.to(device)
 
-            # forward + backward + optimize
-            outputs = net(images)
-            loss = yolo_loss(input=outputs, target=labels, mask=masks)
-            loss.backward()
-            optimizer.step()
+                # zero the parameter gradients
+                optimizer.zero_grad()
 
-            running_loss += loss.item()
-            print(f'[Epoch {epoch} / {args.epoch}] {i} / {args.batch_size / len(dataloader)}  loss: {running_loss}')
-        running_loss = 0.0
+                # forward + backward + optimize
+                outputs = net(images)
+                loss = yolo_loss(input=outputs, target=labels, mask=masks)
+                loss.backward()
+                optimizer.step()
+
+                running_loss += loss.item()
+            running_loss = 0.0
 
 print('Finished Training')
 
