@@ -80,8 +80,10 @@ class PascalVOCDataset(Dataset):
                     mask[0+5*j:4+5*j, idx, idy] = self.l_coord
                     mask[4+5*j, idx, idy] = 1.
                     break
-            label[10+c, idx, idy] = 1.
-            mask[10:, idx, idy] = 1.
+            for i in range(xmin // grid_len, (xmax // grid_len) + 1):
+                for j in range(ymin // grid_len, (ymax // grid_len) + 1):
+                    label[10+c, i, j] = 1.
+                    mask[10:, i, j] = 1.
 
         for j in range(self.bbox_num):
             mask[4+5*j] += (1 - mask[4+5*j]) * self.l_noobj
