@@ -80,8 +80,8 @@ class PascalVOCDataset(Dataset):
                     mask[0+5*j:4+5*j, idx, idy] = self.l_coord
                     mask[4+5*j, idx, idy] = 1.
                     break
-            for i in range(xmin // grid_len, (xmax // grid_len) + 1):
-                for j in range(ymin // grid_len, (ymax // grid_len) + 1):
+            for i in range(int(xmin // grid_len), min(int(xmax // grid_len) + 1, self.grid_num)):
+                for j in range(int(ymin // grid_len), min(int(ymax // grid_len) + 1, self.grid_num)):
                     label[10+c, i, j] = 1.
                     mask[10:, i, j] = 1.
 
