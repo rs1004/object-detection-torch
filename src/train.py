@@ -42,7 +42,7 @@ if __name__ == '__main__':
         bbox_num=args.bbox_num,
         class_num=args.class_num)
 
-    optimizer = optim.Adam(net.parameters(), lr=0.001)
+    optimizer = optim.Adam(net.parameters(), lr=0.00009, weight_decay=0.00001)
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     net.to(device)
