@@ -2,6 +2,7 @@ from dataset import PascalVOCDataset
 from model import Yolo
 from loss import yolo_loss
 from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
 import torch
 import torchvision.transforms as transforms
 import torch.optim as optim
@@ -49,6 +50,8 @@ if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     net.to(device)
 
+    writer = SummaryWriter(log_dir='./logs')
+
     running_loss = 0.0
     for epoch in range(args.epochs):
         with tqdm(dataloader, total=len(dataloader)) as pbar:
@@ -71,9 +74,11 @@ if __name__ == '__main__':
                 optimizer.step()
 
                 running_loss += loss.item()
+                writer.add_scalar('loss', running_loss, i)
             running_loss = 0.0
             if epoch % args.save_period == 0:
                 torch.save(net.state_dict(), args.save_path)
 
 print('Finished Training')
 
+writer.close()
