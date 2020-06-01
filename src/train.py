@@ -17,6 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('--l_noobj', type=float, default=.5)
     parser.add_argument('--batch_size', type=int, default=4)
     parser.add_argument('--epochs', type=int, default=5)
+    parser.add_argument('--save_period', type=int, default=5)
     args = parser.parse_args()
 
     transform = transforms.Compose([transforms.ToTensor()])
@@ -70,8 +71,8 @@ if __name__ == '__main__':
 
                 running_loss += loss.item()
             running_loss = 0.0
+            if epoch % args.save_period == 0:
+                torch.save(net.state_dict(), './yolo_net.pth')
 
 print('Finished Training')
 
-PATH = './yolo_net.pth'
-torch.save(net.state_dict(), PATH)
