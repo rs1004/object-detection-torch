@@ -3,3 +3,9 @@ data
 
 # cache
 __pycache__
+
+# vscode
+.vscode
+
+# practice
+src/practice.py
