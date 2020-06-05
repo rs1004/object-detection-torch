@@ -1,5 +1,7 @@
 # data
 data
+inference
+yolo_net.pth
 
 # cache
 __pycache__
