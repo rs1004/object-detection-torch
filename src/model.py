@@ -55,6 +55,7 @@ class Yolo(nn.Module):
 
         # layer7
         self.fc7 = nn.Linear(self.grid_num * self.grid_num * 1024, 4096)
+        self.dropout7 = nn.Dropout(p=0.5)
 
         # layer8
         self.fc8 = nn.Linear(4096, self.grid_num * self.grid_num * (5 * self.bbox_num + self.class_num))
@@ -103,6 +104,7 @@ class Yolo(nn.Module):
         # layer7
         x = x.view(-1, self.num_flat_features(x))
         x = F.leaky_relu(self.fc7(x), negative_slope=0.1)
+        x = self.dropout7(x)
 
         # layer8
         x = self.fc8(x)
