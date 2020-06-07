@@ -2,6 +2,7 @@
 data
 inference
 yolo_net.pth
+min_loss.txt
 
 # cache
 __pycache__

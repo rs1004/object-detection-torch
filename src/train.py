@@ -3,6 +3,7 @@ from model import Yolo
 from loss import yolo_loss
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
+from pathlib import Path
 import torch
 import torchvision.transforms as transforms
 import torch.optim as optim
@@ -20,6 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=5)
     parser.add_argument('--save_period', type=int, default=5)
     parser.add_argument('--model_weights_path', type=str, default='./yolo_net.pth')
+    parser.add_argument('--min_loss_path', type=str, default='./min_loss.txt')
     args = parser.parse_args()
 
     transform = transforms.Compose(
@@ -52,6 +54,13 @@ if __name__ == '__main__':
     if Path(args.model_weights_path).exists():
         print('weights loaded.')
         net.load_state_dict(torch.load(Path(args.model_weights_path)))
+    
+    if Path(args.min_loss_path).exists():
+        print('min_loss loaded.')
+        with open(Path(args.min_loss_path), 'r') as f:
+            min_loss = float(f.readlines()[0])
+    else:
+        min_loss = None
 
     optimizer = optim.Adam(net.parameters(), lr=0.00001, weight_decay=0.00001)
 
@@ -61,7 +70,6 @@ if __name__ == '__main__':
     writer = SummaryWriter(log_dir='./logs')
 
     running_loss = 0.0
-    min_loss = None
     for epoch in range(args.epochs):
         with tqdm(dataloader, total=len(dataloader)) as pbar:
             for i, (images, labels, masks) in enumerate(pbar):
@@ -88,6 +96,8 @@ if __name__ == '__main__':
             if (min_loss is None) or (running_loss < min_loss):
                 torch.save(net.state_dict(), args.model_weights_path)
                 min_loss = running_loss
+                with open(Path(args.min_loss_path), 'w') as f:
+                    f.write(str(min_loss))
             running_loss = 0.0
 
 print('Finished Training')
