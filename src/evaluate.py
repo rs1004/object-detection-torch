@@ -137,7 +137,8 @@ if __name__ == '__main__':
     net = Yolo(
         grid_num=args.grid_num,
         bbox_num=args.bbox_num,
-        class_num=args.class_num)
+        class_num=args.class_num,
+        is_train=False)
 
     if Path(args.model_weights_path).exists():
         print('weights loaded.')

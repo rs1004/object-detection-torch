@@ -5,13 +5,14 @@ from functools import partial
 
 
 class Yolo(nn.Module):
-    def __init__(self, grid_num, bbox_num, class_num=20):
+    def __init__(self, grid_num, bbox_num, class_num=20, is_train=True):
         super(Yolo, self).__init__()
 
         # params
         self.grid_num = grid_num
         self.bbox_num = bbox_num
         self.class_num = class_num
+        self.is_train = is_train
 
         # layer1
         self.conv1_1 = ConvWithBN(in_channels=3, out_channels=64, kernel_size=7, stride=2, padding=3)
@@ -104,7 +105,8 @@ class Yolo(nn.Module):
         # layer7
         x = x.view(-1, self.num_flat_features(x))
         x = F.leaky_relu(self.fc7(x), negative_slope=0.1)
-        x = self.dropout7(x)
+        if self.is_train:
+            x = self.dropout7(x)
 
         # layer8
         x = self.fc8(x)

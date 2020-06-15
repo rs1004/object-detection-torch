@@ -45,7 +45,8 @@ if __name__ == '__main__':
     net = Yolo(
         grid_num=args.grid_num,
         bbox_num=args.bbox_num,
-        class_num=args.class_num)
+        class_num=args.class_num,
+        is_train=False)
 
     with open(Path(__file__).parent / 'labelmap.json', 'r') as f:
         labelmap = json.load(f)['PascalVOC']
