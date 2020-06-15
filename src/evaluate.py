@@ -116,8 +116,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     transform = transforms.Compose(
-        [transforms.ToTensor()
-         ])
+        [transforms.ToTensor()])
 
     dataset = PascalVOCDataset(
         data_dirs=['/work/data/VOCdevkit/VOC2007'],

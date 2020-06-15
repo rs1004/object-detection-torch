@@ -25,8 +25,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     transform = transforms.Compose(
-        [transforms.ToTensor(),
-        transforms.RandomErasing(p=0.5, scale=(0.02, 0.1), value='random')])
+        [transforms.ToTensor()])
     dataset = PascalVOCDataset(
         data_dirs=['/work/data/VOCdevkit/VOC2007'],
         data_list_file_name='test.txt',

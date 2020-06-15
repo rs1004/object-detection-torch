@@ -26,6 +26,8 @@ if __name__ == '__main__':
 
     transform = transforms.Compose(
         [transforms.ToTensor(),
+        transforms.RandomErasing(p=0.5, scale=(0.02, 0.1), value='random'),
+        transforms.RandomErasing(p=0.5, scale=(0.02, 0.1), value='random'),
         transforms.RandomErasing(p=0.5, scale=(0.02, 0.1), value='random')
         ])
     dataset = PascalVOCDataset(
