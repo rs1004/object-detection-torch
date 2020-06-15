@@ -1,22 +1,29 @@
 import torch
+import json
 import argparse
 import torchvision.transforms as transforms
 from dataset import PascalVOCDataset
 from model import Yolo
 from pathlib import Path
 from tqdm import tqdm
+from datetime import date
+from subprocess import check_output
 
 
 OUTPUT_FORMAT = '''
 # EVALUATION REPORT
+
 ## REPORTING DATE
 {date}
+
 ## RUNTIME
 ```
 {runtime}
 ```
+
 ## CONFIG
 {config_table}
+
 ## SCORES
 {score_table}
 '''
@@ -56,6 +63,46 @@ def calc_iou(bbox_1, bbox_2):
     return s1_s2 / (s1 + s2 - s1_s2)
 
 
+def make_report(result_dict, args, epsilon=1.0e-5):
+    d = date.today().isoformat()
+
+    runtime = check_output(['nvidia-smi']).decode()
+
+    config_table = ['|item|value|', '|-|-|']
+    for k, v in args.__dict__.items():
+        config_table.append(f'|{k}|{v}|')
+
+    with open(Path(__file__).parent / 'labelmap.json', 'r') as f:
+        label_map = json.load(f)['PascalVOC']
+
+    score_table = ['|label|average precision|average recall|', '|-|-|-|']
+    sum_ap = 0
+    sum_ar = 0
+    for class_id, result in result_dict.items():
+        average_precision = sum(result['precision']) / (len(result['precision']) + epsilon)
+        average_recall = sum(result['recall']) / (len(result['recall']) + epsilon)
+        sum_ap += average_precision
+        sum_ar += average_recall
+        score_table.append(f'|{label_map[class_id]}|{_float2str(average_precision)}|{_float2str(average_recall)}|')
+
+    score_table.append(f'|**mean**|**{_float2str(sum_ap/len(label_map))}**|**{_float2str(sum_ar/len(label_map))}**|')
+
+    report = OUTPUT_FORMAT.format(
+        date=d,
+        runtime=runtime,
+        config_table='\n'.join(config_table),
+        score_table='\n'.join(score_table)
+    )
+
+    Path(args.evaluation_dir).mkdir(parents=True, exist_ok=True)
+    with open(Path(args.evaluation_dir) / f'report_{d}.md', 'w') as f:
+        f.write(report)
+
+
+def _float2str(val):
+    return str(round(val, 3))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--imsize', type=int, default=448)
@@ -64,6 +111,7 @@ if __name__ == '__main__':
     parser.add_argument('--class_num', type=int, default=20)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--model_weights_path', type=str, default='./yolo_net.pth')
+    parser.add_argument('--evaluation_dir', type=str, default='./eval/')
 
     args = parser.parse_args()
 
@@ -122,3 +170,6 @@ if __name__ == '__main__':
                     result_dict[class_id]['precision'].append(precision)
                     if recall is not None:
                         result_dict[class_id]['recall'].append(recall)
+
+    # レポート出力
+    make_report(result_dict=result_dict, args=args)
