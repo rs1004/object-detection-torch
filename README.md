@@ -1,5 +1,5 @@
 # object-detection-torch
-object detection by yolov3 with pytorch
+object detection by yolo with pytorch
 
 ## 概要
 物体検出モデル及び一連のスクリプトを`pytorch`をベースにして作成する（予定）。
