@@ -56,7 +56,7 @@ class Yolo(nn.Module):
 
         # layer7
         self.fc7 = nn.Linear(self.grid_num * self.grid_num * 1024, 4096)
-        self.dropout7 = nn.Dropout(p=0.5)
+        self.dropout7 = nn.Dropout(p=0.3)
 
         # layer8
         self.fc8 = nn.Linear(4096, self.grid_num * self.grid_num * (5 * self.bbox_num + self.class_num))
