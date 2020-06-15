@@ -4,6 +4,7 @@ import torchvision.transforms as transforms
 from dataset import PascalVOCDataset
 from model import Yolo
 from pathlib import Path
+from tqdm import tqdm
 
 
 OUTPUT_FORMAT = '''
@@ -28,7 +29,7 @@ def get_bboxes(tensor, imsize, class_num, is_out=False):
     bboxes = {i: [] for i in range(class_num)}
     for i in range(grid_num):
         for j in range(grid_num):
-            class_id = torch.argmax(tensor[5*bbox_num:, i, j])
+            class_id = torch.argmax(tensor[5*bbox_num:, i, j]).item()
             for k in range(bbox_num):
                 x, y, w, h, c = tensor[0+5*k:5+5*k, i, j]
                 if c <= 0.5:
@@ -94,8 +95,8 @@ if __name__ == '__main__':
         print('weights loaded.')
         net.load_state_dict(torch.load(Path(args.model_weights_path)))
 
-    result_dict = {i: {'precision': [], 'recall': []} for i in range(20)}
-    for images, labels, _ in dataloader:
+    result_dict = {i: {'precision': [], 'recall': []} for i in range(args.class_num)}
+    for images, labels, _ in tqdm(dataloader, total=len(dataloader)):
         outputs = net(images)
         for output, label in zip(outputs, labels):
             output_bboxes = get_bboxes(tensor=output, imsize=args.imsize, class_num=args.class_num, is_out=True)
@@ -115,7 +116,7 @@ if __name__ == '__main__':
                         max_id = ious.index(max(ious))
                         if ious[max_id] >= 0.5:
                             t_num += 1
-                            label_bboxes.pop(max_id)
+                            label_bboxes[class_id].pop(max_id)
                     precision = t_num / i
                     recall = t_num / label_num if label_num > 0 else None
                     result_dict[class_id]['precision'].append(precision)
