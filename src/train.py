@@ -85,16 +85,18 @@ if __name__ == '__main__':
                 masks = masks.to(device)
 
                 # zero the parameter gradients
-                scheduler.zero_grad()
+                optimizer.zero_grad()
 
                 # forward + backward + optimize
                 outputs = net(images)
                 loss = yolo_loss(input=outputs, target=labels, mask=masks)
                 loss.backward()
+                optimizer.step()
                 scheduler.step()
 
                 running_loss += loss.item()
                 writer.add_scalar('loss', running_loss, i)
+                writer.add_scalar('lr', scheduler.get_last_lr()[0], i)
 
             if (min_loss is None) or (running_loss < min_loss):
                 torch.save(net.state_dict(), args.model_weights_path)
