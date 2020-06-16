@@ -4,6 +4,7 @@ from loss import yolo_loss
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 from pathlib import Path
+from torch.optim.lr_scheduler import ExponentialLR
 import torch
 import torchvision.transforms as transforms
 import torch.optim as optim
@@ -63,7 +64,8 @@ if __name__ == '__main__':
     else:
         min_loss = None
 
-    optimizer = optim.Adam(net.parameters(), lr=0.00001, weight_decay=0.00001)
+    optimizer = optim.Adam(net.parameters(), lr=0.000001, weight_decay=0.00001)
+    scheduler = ExponentialLR(optimizer, gamma=0.95)   
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     net.to(device)
@@ -83,13 +85,13 @@ if __name__ == '__main__':
                 masks = masks.to(device)
 
                 # zero the parameter gradients
-                optimizer.zero_grad()
+                scheduler.zero_grad()
 
                 # forward + backward + optimize
                 outputs = net(images)
                 loss = yolo_loss(input=outputs, target=labels, mask=masks)
                 loss.backward()
-                optimizer.step()
+                scheduler.step()
 
                 running_loss += loss.item()
                 writer.add_scalar('loss', running_loss, i)
