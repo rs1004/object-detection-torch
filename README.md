@@ -63,12 +63,12 @@ PASCAL VOC (Visual Object Classes) 2007, 2012を使用。
 ```
 src
 ├dataset.py     ・・・元データの加工・データセットのクラス
+├evaluate.py    ・・・評価用のスクリプト
+├inference.py   ・・・推論用のスクリプト
 ├labelmap.json  ・・・検出対象の一覧
 ├loss.py        ・・・損失関数の定義
 ├model.py       ・・・モデルの定義
-├train.py       ・・・学習用のスクリプト
-├eval.py        ・・・評価用のスクリプト
-└inference.py   ・・・推論用のスクリプト
+└train.py       ・・・学習用のスクリプト
 ```
 
 ## 処理実施手順
