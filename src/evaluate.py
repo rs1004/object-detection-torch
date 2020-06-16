@@ -144,32 +144,33 @@ if __name__ == '__main__':
         net.load_state_dict(torch.load(Path(args.model_weights_path)))
 
     result_dict = {i: {'precision': [], 'recall': []} for i in range(args.class_num)}
-    for images, labels, _ in tqdm(dataloader, total=len(dataloader)):
-        outputs = net(images)
-        for output, label in zip(outputs, labels):
-            output_bboxes = get_bboxes(tensor=output, imsize=args.imsize, class_num=args.class_num, is_out=True)
-            label_bboxes = get_bboxes(tensor=label, imsize=args.imsize, class_num=args.class_num)
-            for class_id in range(args.class_num):
-                t_num = 0
-                label_num = len(label_bboxes[class_id])
-                # 未検出時
-                if (len(output_bboxes[class_id]) == 0) and label_num > 0:
-                    recall = 0
-                    for _ in range(label_num):
-                        result_dict[class_id]['recall'].append(recall)
-                # 検出時
-                for i, (_, output_bbox) in enumerate(output_bboxes[class_id], start=1):
-                    ious = [calc_iou(output_bbox, label_bbox) for _, label_bbox in label_bboxes[class_id]]
-                    if len(ious) > 0:
-                        max_id = ious.index(max(ious))
-                        if ious[max_id] >= 0.5:
-                            t_num += 1
-                            label_bboxes[class_id].pop(max_id)
-                    precision = t_num / i
-                    recall = t_num / label_num if label_num > 0 else None
-                    result_dict[class_id]['precision'].append(precision)
-                    if recall is not None:
-                        result_dict[class_id]['recall'].append(recall)
+    with torch.no_grad():
+        for images, labels, _ in tqdm(dataloader, total=len(dataloader)):
+            outputs = net(images)
+            for output, label in zip(outputs, labels):
+                output_bboxes = get_bboxes(tensor=output, imsize=args.imsize, class_num=args.class_num, is_out=True)
+                label_bboxes = get_bboxes(tensor=label, imsize=args.imsize, class_num=args.class_num)
+                for class_id in range(args.class_num):
+                    t_num = 0
+                    label_num = len(label_bboxes[class_id])
+                    # 未検出時
+                    if (len(output_bboxes[class_id]) == 0) and label_num > 0:
+                        recall = 0
+                        for _ in range(label_num):
+                            result_dict[class_id]['recall'].append(recall)
+                    # 検出時
+                    for i, (_, output_bbox) in enumerate(output_bboxes[class_id], start=1):
+                        ious = [calc_iou(output_bbox, label_bbox) for _, label_bbox in label_bboxes[class_id]]
+                        if len(ious) > 0:
+                            max_id = ious.index(max(ious))
+                            if ious[max_id] >= 0.5:
+                                t_num += 1
+                                label_bboxes[class_id].pop(max_id)
+                        precision = t_num / i
+                        recall = t_num / label_num if label_num > 0 else None
+                        result_dict[class_id]['precision'].append(precision)
+                        if recall is not None:
+                            result_dict[class_id]['recall'].append(recall)
 
     # レポート出力
     make_report(result_dict=result_dict, args=args)
