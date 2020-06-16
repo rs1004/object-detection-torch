@@ -20,7 +20,7 @@ PASCAL VOC (Visual Object Classes) 2007, 2012を使用。
 - data/VOCdevkit/VOC2007/ImageSets/Main/test.txt
 
 ## 推論結果・評価結果
-### train データ
+### 学習データ
 学習自体は進んでいるようである。
 
 ![image1.png](imgs/train/000001.png)
@@ -29,8 +29,8 @@ PASCAL VOC (Visual Object Classes) 2007, 2012を使用。
 
 ![image2.png](imgs/train/000003.png)
 
-### test データ
-test データでの推論はあまり良い結果にならなかった。
+### テストデータ
+テストデータでの推論はあまり良い結果にならなかった。
 
 定量的な評価は以下の通り。（2020.6.16時点）<br>
 50epoch実施した結果であるが、全体的にscoreは低かった。<br>
